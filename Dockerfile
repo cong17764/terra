@@ -9,4 +9,4 @@ WORKDIR /code
 RUN npm install
 RUN npm run certs
 
-ENTRYPOINT npm start
+ENTRYPOINT ["npm", "start"]
