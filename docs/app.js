@@ -93,7 +93,7 @@ const statusDialog = {
 	},
 
 	setStatus: function(status, noRing) {
-		agent.setSheet(this.item.sheet, this.item.l, this.tile.data('accommodation'), status, util.formatNote(noRing))
+		agent.setSheetAsync(this.item.sheet, this.item.l, this.tile.data('accommodation'), status, util.formatNote(noRing))
 			.then((row) => {
 				updateTile(this.tile, row);
 			});
@@ -133,30 +133,30 @@ const visitsScreen = {
 	},
 
 	update: function() {
-		const data = agent.readSheet(this.item.sheet);
+		agent.readSheetAsync(this.item.sheet).then((data) => {
+			$('#visits-title').text(data.locations[this.item.l].name);
 
-		$('#visits-title').text(data.locations[this.item.l].name);
+			const accommodations = data.locations[this.item.l].accommodations;
+			const tiles = this.container.children();
 
-		const accommodations = data.locations[this.item.l].accommodations;
-		const tiles = this.container.children();
+			if (tiles.length != accommodations.length) {
+				this.container.empty();
 
-		if (tiles.length != accommodations.length) {
-			this.container.empty();
-
-			const template = $('#accommodation-template');
-			for (let a = 0; a < accommodations.length; ++a) {
-				updateTile(template.contents().clone().data('accommodation', a), accommodations[a])
-					.appendTo(this.container);
+				const template = $('#accommodation-template');
+				for (let a = 0; a < accommodations.length; ++a) {
+					updateTile(template.contents().clone().data('accommodation', a), accommodations[a])
+						.appendTo(this.container);
+				}
 			}
-		}
-		else {
-			for (let a = 0; a < accommodations.length; ++a)
-				updateTile($(tiles[a]), accommodations[a])
-		}
+			else {
+				for (let a = 0; a < accommodations.length; ++a)
+					updateTile($(tiles[a]), accommodations[a])
+			}
+		});
 	},
 
 	refresh: function() {
-		agent.refreshSheet(this.item.sheet).then(() => { this.update(); });
+		agent.refreshSheetAsync(this.item.sheet).then(() => { this.update(); });
 	}
 };
 
@@ -181,15 +181,16 @@ const mainScreen = {
 		const container = $('#main-locations').empty();
 
 		agent.getSheets().forEach(item => {
-			const data = agent.readSheet(item.sheet);
-			if (data?.locations) {
-				for (let l = 0; l < data.locations.length; ++l) {
-					$('<button class="location"></button>')
-						.data('item', Object.assign({ l }, item))
-						.text(data.locations[l].name)
-						.appendTo(container);
+			agent.readSheetAsync(item.sheet).then((data) => {
+				if (data?.locations) {
+					for (let l = 0; l < data.locations.length; ++l) {
+						$('<button class="location"></button>')
+							.data('item', Object.assign({ l }, item))
+							.text(data.locations[l].name)
+							.appendTo(container);
+					}
 				}
-			}
+			});
 		});
 	}
 };
@@ -216,7 +217,7 @@ const settingsScreen = {
 
 				const m = /docs\.google\.com\/spreadsheets\/d\/([^\/]+)\//.exec($('#settings-href').val());
 				if (m) {
-					agent.addSheet(m[1]).then(() => {
+					agent.addSheetAsync(m[1]).then(() => {
 						self.updateSheets();
 						mainScreen.updateLocations();
 
@@ -255,12 +256,12 @@ const settingsScreen = {
 		const template = $('#sheet-template');
 
 		agent.getSheets().forEach(item => {
-			const data = agent.readSheet(item.sheet);
-
-			template.contents().clone()
-				.find('.sheet-name').text(data?.name || item.sheet).end()
-				.find('.sheet-button-remove').data('sheet', item.sheet).end()
-				.appendTo(container);
+			agent.readSheetAsync(item.sheet).then((data) => {
+				template.contents().clone()
+					.find('.sheet-name').text(data?.name || item.sheet).end()
+					.find('.sheet-button-remove').data('sheet', item.sheet).end()
+					.appendTo(container);
+			});
 		});
 	}
 };
@@ -268,7 +269,7 @@ const settingsScreen = {
 const initApp = (hash) => {
 	showScreen('loading');
 
-	agent.importConfig(hash)
+	agent.importConfigAsync(hash)
 		.then(() => {
 			window.history.replaceState(null, '', location.origin + location.pathname);
 			window.location.reload();

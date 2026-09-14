@@ -37,7 +37,7 @@ const url = () => {
 	throw Error('deployment ID not defined.');
 };
 
-const getSheet = (sheet) => new Promise((resolve, reject) => {
+const getSheetAsync = (sheet) => new Promise((resolve, reject) => {
 	console.log(`Get sheet ${sheet}`);
 
 	$.get(url(), { x: sheet })
@@ -56,13 +56,13 @@ export const setDeployment = (deployment) => { config.deployment = deployment; s
  */
 export const getSheets = () => config.sheets;
 
-export const addSheet = async (sheet) => {
+export const addSheetAsync = async (sheet) => {
 	console.log(`Add sheet ${sheet}`);
 
 	if (config.sheets.find(item => item.sheet == sheet))
 		throw Error('sheet already exists.');
 
-	const data = await getSheet(sheet);
+	const data = await getSheetAsync(sheet);
 	config.sheets.push({ sheet });
 	saveConfig();
 	return data;
@@ -80,22 +80,25 @@ export const removeSheet = (sheet) => {
 	}
 };
 
-export const readSheet = (sheet) => {
+export const readSheetAsync = async (sheet) => {
 	const raw = storage.getItem(sheet);
-	return raw ? JSON.parse(raw) : null;
+	if (raw)
+		return JSON.parse(raw);
+
+	return getSheetAsync(sheet);
 };
 
-export const refreshSheet = async (sheet) => {
+export const refreshSheetAsync = async (sheet) => {
 	const item = config.sheets.find(item => item.sheet == sheet);
 	if (item) {
-		return getSheet(sheet);
+		return getSheetAsync(sheet);
 	}
 
 	throw Error('sheet not found.');
 
 };
 
-export const setSheet = (sheet, location, accommodation, status, note) => new Promise((resolve, reject) => {
+export const setSheetAsync = (sheet, location, accommodation, status, note) => new Promise((resolve, reject) => {
 	$.get(url(), { x: sheet, l: location, a: accommodation, s: status, n: note })
 		.done((row) => {
 			const raw = storage.getItem(sheet);
@@ -111,7 +114,7 @@ export const setSheet = (sheet, location, accommodation, status, note) => new Pr
 		});
 });
 
-export const importConfig = async (hash) => {
+export const importConfigAsync = async (hash) => {
 	console.log('Importing config');
 
 	const [ deployment, ...sheets ] = hash.split('+');
@@ -127,7 +130,7 @@ export const importConfig = async (hash) => {
 	for (const sheet of sheets) {
 		if (!config.sheets.find(item => item.sheet == sheet)) {
 			const local = new String(sheet);
-			await addSheet(local).catch((err) => {
+			await addSheetAsync(local).catch((err) => {
 				console.error(err);
 			});
 		}
