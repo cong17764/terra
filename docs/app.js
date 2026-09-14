@@ -255,8 +255,10 @@ const settingsScreen = {
 		const template = $('#sheet-template');
 
 		agent.getSheets().forEach(item => {
+			const data = agent.readSheet(item.sheet);
+
 			template.contents().clone()
-				.find('.sheet-name').text(item.name || item.sheet).end()
+				.find('.sheet-name').text(data?.name || item.sheet).end()
 				.find('.sheet-button-remove').data('sheet', item.sheet).end()
 				.appendTo(container);
 		});

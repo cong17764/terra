@@ -25,7 +25,7 @@ const loadConfig = () => {
 	const [ deployment, ...sheets ] = raw.slice(CONFIG_COOKIE.length + 1).split('+');
 
 	config.deployment = deployment;
-	config.sheets = sheets.map(sheet => ({ sheet, name: '' }));
+	config.sheets = sheets.map(sheet => ({ sheet }));
 };
 
 loadConfig();
@@ -52,7 +52,7 @@ export const getDeployment = () => config.deployment;
 export const setDeployment = (deployment) => { config.deployment = deployment; saveConfig(); };
 
 /**
- * Returns an array of { sheet, name } objects.
+ * Returns an array of { sheet } objects.
  */
 export const getSheets = () => config.sheets;
 
@@ -63,7 +63,7 @@ export const addSheet = async (sheet) => {
 		throw Error('sheet already exists.');
 
 	const data = await getSheet(sheet);
-	config.sheets.push({ sheet, name: data.name });
+	config.sheets.push({ sheet });
 	saveConfig();
 	return data;
 };
@@ -88,12 +88,7 @@ export const readSheet = (sheet) => {
 export const refreshSheet = async (sheet) => {
 	const item = config.sheets.find(item => item.sheet == sheet);
 	if (item) {
-		const data = await getSheet(sheet);
-		if (item.name != data.name) {
-			item.name = data.name;
-			saveConfig();
-		}
-		return data;
+		return getSheet(sheet);
 	}
 
 	throw Error('sheet not found.');
