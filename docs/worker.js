@@ -1,14 +1,13 @@
 /*
  * Fri Sep 20 22:35:04 EEST 2024
  */
-const version = 3;
+const version = 4;
 
 const content = [
 	'index.html',
 	'status.css',
 	'styles.css',
 	'app.js',
-	'cookie.js',
 	'agent.js',
 	'util.js',
 	'icons/app-icon-16.png',

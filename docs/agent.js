@@ -1,4 +1,4 @@
-const CONFIG = 'terra-config';
+const CONFIG_COOKIE = 'terra';
 
 const storage = window.localStorage;
 
@@ -7,12 +7,28 @@ $.ajaxSetup({
 	dataType: 'json',
 });
 
-const config = Object.assign({ deployment: '', sheets: [] },
-	JSON.parse(storage.getItem(CONFIG)));
+const config = { deployment: '', sheets: [] };
 
 const saveConfig = () => {
-	storage.setItem(CONFIG, JSON.stringify(config));
+	let hash = config.deployment;
+	for (const item of config.sheets)
+		hash += `+${item.sheet}`;
+	document.cookie = `${CONFIG_COOKIE}=${hash}; path=/; max-age=31536000`;
 };
+
+const loadConfig = () => {
+	const raw = document.cookie
+		.split('; ')
+		.find(item => item.startsWith(`${CONFIG_COOKIE}=`));
+	if (!raw) return;
+
+	const [ deployment, ...sheets ] = raw.slice(CONFIG_COOKIE.length + 1).split('+');
+
+	config.deployment = deployment;
+	config.sheets = sheets.map(sheet => ({ sheet, name: '' }));
+};
+
+loadConfig();
 
 const url = () => {
 	if (config.deployment)
@@ -64,7 +80,10 @@ export const removeSheet = (sheet) => {
 	}
 };
 
-export const readSheet = (sheet) => JSON.parse(storage.getItem(sheet));
+export const readSheet = (sheet) => {
+	const raw = storage.getItem(sheet);
+	return raw ? JSON.parse(raw) : null;
+};
 
 export const refreshSheet = async (sheet) => {
 	const item = config.sheets.find(item => item.sheet == sheet);
@@ -84,9 +103,12 @@ export const refreshSheet = async (sheet) => {
 export const setSheet = (sheet, location, accommodation, status, note) => new Promise((resolve, reject) => {
 	$.get(url(), { x: sheet, l: location, a: accommodation, s: status, n: note })
 		.done((row) => {
-			const data = JSON.parse(storage.getItem(sheet));
-			data.locations[location].accommodations[accommodation] = row;
-			storage.setItem(sheet, JSON.stringify(data));
+			const raw = storage.getItem(sheet);
+			if (raw) {
+				const data = JSON.parse(raw);
+				data.locations[location].accommodations[accommodation] = row;
+				storage.setItem(sheet, JSON.stringify(data));
+			}
 			resolve(row);
 		})
 		.fail((a, b, c) => {

@@ -16,7 +16,6 @@ docs/            # The web app itself. This directory is what gets published
   index.html     #   Single-page app entry point
   app.js         #   Main app logic (screens, tiles, status dialog, settings)
   agent.js       #   Backend client: deployment ID, sheet config, data cache
-  cookie.js      #   Small document.cookie helpers
   util.js        #   Date/note formatting helpers
   worker.js      #   Service worker (PWA install + cache)
   styles.css     #   Main styles
@@ -93,6 +92,9 @@ under a versioned cache name. When you add, rename, or remove any file under
 `docs/` that the app loads, **also update the `content` array and bump
 `version`** — otherwise the PWA install cache goes stale.
 
+**Bump `version` every time the worker code itself changes**, so the browser
+reloads the worker on the next run.
+
 ## Coding Conventions
 
 - Vanilla JS, ES modules in the browser (`type="module"`), no TypeScript,
@@ -102,9 +104,11 @@ under a versioned cache name. When you add, rename, or remove any file under
   jQuery from the jsDelivr CDN (pinned in `index.html` with an integrity
   hash, and mirrored in the worker cache list).
 - UI strings are Russian; keep them in Russian.
-- Config and fetched sheet data live in `localStorage` (key `terra-config`,
-  plus one key per spreadsheet ID). Don't move this to cookies or IndexedDB
-  without a reason.
+- Config (deployment ID + sheet list) lives in a **cookie** named `terra`
+  (value: `DEPLOYMENT_ID+sheet1+sheet2`, same format as the share URL
+  fragment). Fetched sheet data lives in `localStorage` (one key per
+  spreadsheet ID) as a disposable cache. Don't move this to IndexedDB or
+  change the cookie name without a reason.
 - `package-lock.json` is gitignored and `node_modules/` is committed for the
   dev server; don't "clean up" that.
 

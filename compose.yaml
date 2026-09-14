@@ -3,7 +3,7 @@ version: '2'
 
 services:
   webserver:
-    image: orbis/webserver
+    image: terra/webserver
     build: .
     ports:
       - 8443:8443

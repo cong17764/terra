@@ -1,4 +1,3 @@
-import * as cookie from './cookie.js';
 import * as agent from './agent.js';
 import * as util from './util.js';
 
@@ -257,7 +256,7 @@ const settingsScreen = {
 
 		agent.getSheets().forEach(item => {
 			template.contents().clone()
-				.find('.sheet-name').text(item.name).end()
+				.find('.sheet-name').text(item.name || item.sheet).end()
 				.find('.sheet-button-remove').data('sheet', item.sheet).end()
 				.appendTo(container);
 		});
@@ -286,17 +285,12 @@ const showApp = (screen) => {
 
 $(function() {
 	if (location.hash) {
-		cookie.set('hash', location.hash, 180);
 		initApp(location.hash);
 	}
 	else if (agent.ok()) {
 		showApp('main');
 	}
 	else {
-		const hash = cookie.get('hash');
-		if (hash)
-			initApp(hash);
-		else
-			showApp('settings');
+		showApp('settings');
 	}
 });
