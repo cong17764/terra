@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no" />
+
+		<link rel="shortcut icon" href="icons/app-icon-16.png" />
+		<link rel="apple-touch-icon" href="icons/app-icon-96.png" />
+		<link rel="manifest" href="app.webmanifest" />
+		<link rel="stylesheet" href="styles.css" />
+
+		<title>Agent</title></title>
+
+		<style></style>
+			body[data-screen="agent"] .screen#agent-screen {
+				display: block;
+			}
+
+			#agent-code {
+				margin: 0;
+				padding: .5em;
+				background-color: #f7f7f7;
+				border-radius: .3em;
+				overflow-x: auto;
+				font-family: Menlo, Consolas, monospace;
+				font-size: .8em;
+				line-height: 1.4;
+				tab-size: 2;
+			}
+
+			#agent-code .c { color: #8c8c8c; }
+			#agent-code .s { color: #c41a16; }
+			#agent-code .k { color: #aa0d91; }
+			#agent-code .n { color: #1c00cf; }
+			#agent-code .f { color: #795e26; }
+		</style>
+	</head>
+	<body data-screen="agent">
+		<section id="agent-screen" class="screen">
+			<div class="screen-header">
+				<h1></h1><a href="index.html" style="color: inherit;">Agent</a></h1>
+				<button id="agent-copy" title="Копировать">Копировать</button>
+			</div>
+			<pre id="agent-code"></pre>
+		</section>
+
+		<script type="module">
+			const KEYWORDS = new Set([
+				'break', 'case', 'catch', 'const', 'continue', 'default', 'delete',
+				'do', 'else', 'finally', 'for', 'function', 'if', 'in', 'instanceof',
+				'new', 'return', 'switch', 'this', 'throw', 'try', 'typeof', 'var',
+				'void', 'while', 'with'
+			]);
+
+			const GLOBALS = new Set([
+				'true', 'false', 'null', 'undefined',
+				'SpreadsheetApp', 'ContentService', 'MimeType', 'Logger',
+				'JSON', 'Math', 'Object', 'Array', 'String', 'Number', 'Date', 'Error'
+			]);
+
+			const highlight = (code) => {
+				code = code.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+				let html = '';
+				let i = 0;
+
+				while (i < code.length) {
+					const ch = code[i];
+
+					// line comment
+					if (ch == '/' && code[i + 1] == '/') {
+						let j = code.indexOf('\n', i);
+						if (j == -1) j = code.length;
+						html += `<span class="c">${code.slice(i, j)}</span>`;
+						i = j;
+						continue;
+					}
+
+					// block comment
+					if (ch == '/' && code[i + 1] == '*') {
+						const j = code.indexOf('*/', i + 2);
+						const end = j == -1 ? code.length : j + 2;
+						html += `<span class="c">${code.slice(i, end)}</span>`;
+						i = end;
+						continue;
+					}
+
+					// string
+					if (ch == "'" || ch == '"' || ch == '`') {
+						let j = i + 1;
+						while (j < code.length && code[j] != ch) {
+							if (code[j] == '\\') j++;
+							j++;
+						}
+						j = Math.min(j + 1, code.length);
+						html += `<span class="s">${code.slice(i, j)}</span>`;
+						i = j;
+						continue;
+					}
+
+					// number
+					if (/[0-9]/.test(ch) && !/[0-9A-Za-z_$]/.test(code[i - 1] || '')) {
+						let j = i;
+						while (j < code.length && /[0-9a-fA-FxX.]/.test(code[j]))
+							j++;
+						if (code[j] == 'e' || code[j] == 'E') {
+							j++;
+							if (code[j] == '+' || code[j] == '-')
+								j++;
+						}
+						html += `<span class="n">${code.slice(i, j)}</span>`;
+						i = j;
+						continue;
+					}
+
+					// word
+					if (/[A-Za-z_$]/.test(ch)) {
+						let j = i;
+						while (j < code.length && /[A-Za-z0-9_$]/.test(code[j]))
+							j++;
+						const word = code.slice(i, j);
+
+						let k = j;
+						while (k < code.length && code[k] == ' ')
+							k++;
+
+						let cls;
+						if (KEYWORDS.has(word))
+							cls = 'k';
+						else if (GLOBALS.has(word))
+							cls = 'n';
+						else if (code[k] == '(')
+							cls = 'f';
+
+						html += cls ? `<span class="${cls}">${word}</span>` : word;
+						i = j;
+						continue;
+					}
+
+					html += ch;
+					i++;
+				}
+
+				return html;
+			};
+
+			const code = await (await fetch('agent.gs')).text();
+
+			document.getElementById('agent-code').innerHTML = highlight(code);
+
+			document.getElementById('agent-copy').onclick = () => {
+				navigator.clipboard.writeText(code)
+					.then(() => alert('Текст скопирован.'));
+			};
+		</script>
+	</body>
+</html>

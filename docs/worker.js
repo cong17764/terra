@@ -1,10 +1,12 @@
 /*
  * Fri Sep 20 22:35:04 EEST 2024
  */
-const version = 5;
+const version = 6;
 
 const content = [
 	'index.html',
+	'agent.html',
+	'agent.gs',
 	'status.css',
 	'styles.css',
 	'app.js',
