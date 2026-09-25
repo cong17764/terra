@@ -22,7 +22,7 @@ docs/            # The web app itself. This directory is what gets published
   status.css     #   Status tile colors
   app.webmanifest#   PWA manifest
   icons/         #   PWA icons
-agent.gs         # Google Apps Script backend (doGet). Deployed separately,
+  agent.gs       # Google Apps Script backend (doGet). Deployed separately,
                  #   NOT part of the web build.
 main.js          # Local dev server: HTTPS on :8443, serves ./docs statically
 Dockerfile       # Container for the dev server (node + self-signed certs)
