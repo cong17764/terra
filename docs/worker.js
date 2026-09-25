@@ -1,7 +1,4 @@
-/*
- * Fri Sep 20 22:35:04 EEST 2024
- */
-const version = 6;
+const version = 7;
 
 const content = [
 	'index.html',
